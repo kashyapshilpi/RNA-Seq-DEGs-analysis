@@ -49,7 +49,7 @@ To identify DEGs from RNA-Seq data, follow these steps:
 2. Place the raw RNA-Seq data in the appropriate input directory.
 3. Install the required dependencies listed in the "Dependencies" section.
 4. Modify the configuration file if necessary to specify parameters and options.
-5. Execute the analysis script: `bash run_de_analysis.sh`
+5. Execute the analysis script: `bash ngs.sh`, `Rscript deseq2.R`, `Rscript edger.R` 
 6. The results, including lists of DEGs and visualization plots, will be generated in the output directory.
 
 ## Results
