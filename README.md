@@ -45,7 +45,7 @@ The analysis pipeline can be divided into several key steps:
 
 To identify DEGs from RNA-Seq data, follow these steps:
 
-1. Clone this repository to your local machine: `git clone https://github.com/your-username/your-repository.git`
+1. Clone this repository to your local machine: `git clone https://github.com/kashyapshilpi/ RNA-Seq-DEGs-analysis.git`
 2. Place the raw RNA-Seq data in the appropriate input directory.
 3. Install the required dependencies listed in the "Dependencies" section.
 4. Modify the configuration file if necessary to specify parameters and options.
