@@ -1,56 +1,85 @@
 # Differential Expression Analysis of RNA-Seq Data
 
-Welcome to the Differential Expression Analysis of RNA-Seq Data repository! This repository contains scripts and documentation for identifying Differentially Expressed Genes (DEGs) from RNA-Seq data. The analysis pipeline includes preprocessing, quality control, alignment, read counting, and differential expression analysis using popular tools such as HISAT2, HTSeq-Count, and DESeq2.
+## Project Context
+
+This repository represents an early RNA-seq differential expression
+analysis pipeline developed during my MSc training in Bioinformatics.
+The project helped me build a strong foundation in transcriptomic
+data processing, statistical analysis using DESeq2/edgeR, and
+reproducible scripting with R and Bash.
+
+This repository is intended as a learning and reference implementation
+and is not actively maintained.
+
+---
+
+## Overview
+
+This repository contains scripts and documentation for identifying
+Differentially Expressed Genes (DEGs) from RNA-Seq data. The analysis
+pipeline includes preprocessing, quality control, alignment, read
+counting, and differential expression analysis using widely adopted
+tools such as HISAT2, HTSeq-Count, DESeq2, and edgeR.
+
+---
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Dependencies](#dependencies)
-3. [Data](#data)
-4. [Analysis Workflow](#analysis-workflow)
-5. [Usage](#usage)
-6. [Results](#results)
-7. [License](#license)
-8. [Contributing](#contributing)
+1. Introduction  
+2. Dependencies  
+3. Data  
+4. Analysis Workflow  
+5. Usage  
+6. Results  
+7. License  
+8. Contributing  
+
+---
 
 ## Introduction
 
-Differential Expression Analysis is a powerful method for identifying genes that are differentially expressed between different experimental conditions. This analysis provides insights into gene regulation and can lead to the discovery of genes that play a crucial role in specific biological processes.
+Differential expression analysis is a key approach for identifying genes
+that show statistically significant expression changes between
+experimental conditions. Such analyses provide insights into gene
+regulation and underlying biological mechanisms.
+
+---
 
 ## Dependencies
 
-Before running the Differential Expression Analysis pipeline, ensure you have the following tools and software installed on your system:
+The following tools and packages are required:
 
-- HISAT2 (version 2.1.0): A fast and sensitive alignment tool for mapping RNA-Seq reads to a reference genome.
-- HTSeq-Count (version 2.0.3): A tool for counting aligned reads in specific genomic features.
-- DESeq2 (version 1.41.6): A powerful R package for differential gene expression analysis.
-- edgeR (version 3.14.0): A powerful R package for differential gene expression analysis.
+- **HISAT2 (v2.1.0)** – RNA-seq read alignment  
+- **HTSeq-Count (v2.0.3)** – Gene-level read counting  
+- **DESeq2 (v1.41.6)** – Differential expression analysis  
+- **edgeR (v3.14.0)** – Differential expression analysis  
 
-Make sure to update the versions with the appropriate ones you are using.
+Please adjust versions as needed based on your environment.
+
+---
 
 ## Data
 
-The raw RNA-Seq data used in this analysis is not included in this repository. Ensure you have access to the data and place it in the appropriate input directory before running the pipeline.
+Raw RNA-seq data are not included in this repository. Users should place
+their input data in the appropriate directory structure prior to
+execution.
+
+---
 
 ## Analysis Workflow
 
-The analysis pipeline can be divided into several key steps:
+1. **Quality Control** – FastQC, Trimmomatic  
+2. **Read Alignment** – HISAT2  
+3. **Read Counting** – HTSeq-Count  
+4. **Differential Expression Analysis** – DESeq2 / edgeR  
 
-1. **Quality Control**: Assess the quality of raw sequencing data using tools like FastQC, Trimmomatic.
-2. **Read Alignment**: Align the processed reads to a reference genome using HISAT2.
-3. **Read Counting**: Count the number of reads mapped to each gene using HTSeq-Count.
-4. **Differential Expression Analysis**: Use DESeq2 or edgeR to identify genes that are differentially expressed between experimental conditions.
+---
 
 ## Usage
 
-To identify DEGs from RNA-Seq data, follow these steps:
+```bash
+git clone https://github.com/kashyapshilpi/RNA-Seq-DEGs-analysis.git
 
-1. Clone this repository to your local machine: `git clone https://github.com/kashyapshilpi/ RNA-Seq-DEGs-analysis.git`
-2. Place the raw RNA-Seq data in the appropriate input directory.
-3. Install the required dependencies listed in the "Dependencies" section.
-4. Modify the configuration file if necessary to specify parameters and options.
-5. Execute the analysis script: `bash ngs.sh`, `Rscript deseq2.R`, `Rscript edger.R` 
-6. The results, including lists of DEGs and visualization plots, will be generated in the output directory.
 
 ## Results
 
