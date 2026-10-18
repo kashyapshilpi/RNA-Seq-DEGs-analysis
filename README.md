@@ -1,98 +1,72 @@
-# Differential Expression Analysis of RNA-Seq Data
+# RNA-seq Differential Expression Analysis
 
-## Project Context
+Paired-end RNA-seq workflow from raw reads to differentially expressed genes, with DESeq2 as the primary method and edgeR as a cross-check.
 
-This repository represents an early RNA-seq differential expression
-analysis pipeline developed during my MSc training in Bioinformatics.
-The project helped me build a strong foundation in transcriptomic
-data processing, statistical analysis using DESeq2/edgeR, and
-reproducible scripting with R and Bash.
+> Developed during my MSc in Bioinformatics. Kept as a reference implementation; not actively maintained.
 
-This repository is intended as a learning and reference implementation
-and is not actively maintained.
+## Workflow
 
----
+```
+FASTQ ─► FastQC ─► Trimmomatic ─► HISAT2 ─► samtools sort ─► HTSeq-count
+      ─► count_matrix.tsv ─┬─► DESeq2 (apeglm-shrunken fold changes)
+                           └─► edgeR (quasi-likelihood F-test)
+```
 
-## Overview
+## Repository contents
 
-This repository contains scripts and documentation for identifying
-Differentially Expressed Genes (DEGs) from RNA-Seq data. The analysis
-pipeline includes preprocessing, quality control, alignment, read
-counting, and differential expression analysis using widely adopted
-tools such as HISAT2, HTSeq-Count, DESeq2, and edgeR.
+| File | Purpose |
+|---|---|
+| `01_rnaseq_counts.sh` | QC, trimming, alignment, gene counting, merged count matrix, MultiQC report |
+| `02_deseq2.R` | DESeq2 differential expression, MA / PCA / distance heatmap / volcano plots |
+| `03_edger.R` | edgeR differential expression, MDS / BCV / volcano plots |
+| `samplesheet.example.csv` | Example sample sheet (`sample_id,condition`) |
 
----
+## Requirements
 
-## Table of Contents
+- FastQC, MultiQC, Trimmomatic 0.39, HISAT2, samtools, HTSeq ≥ 2.0
+- R ≥ 4.1 with `DESeq2`, `apeglm`, `edgeR`, `ggplot2`, `pheatmap`
 
-1. Introduction  
-2. Dependencies  
-3. Data  
-4. Analysis Workflow  
-5. Usage  
-6. Results  
-7. License  
-8. Contributing  
+Example install with conda:
 
----
-
-## Introduction
-
-Differential expression analysis is a key approach for identifying genes
-that show statistically significant expression changes between
-experimental conditions. Such analyses provide insights into gene
-regulation and underlying biological mechanisms.
-
----
-
-## Dependencies
-
-The following tools and packages are required:
-
-- **HISAT2 (v2.1.0)** – RNA-seq read alignment  
-- **HTSeq-Count (v2.0.3)** – Gene-level read counting  
-- **DESeq2 (v1.41.6)** – Differential expression analysis  
-- **edgeR (v3.14.0)** – Differential expression analysis  
-
-Please adjust versions as needed based on your environment.
-
----
-
-## Data
-
-Raw RNA-seq data are not included in this repository. Users should place
-their input data in the appropriate directory structure prior to
-execution.
-
----
-
-## Analysis Workflow
-
-1. **Quality Control** – FastQC, Trimmomatic  
-2. **Read Alignment** – HISAT2  
-3. **Read Counting** – HTSeq-Count  
-4. **Differential Expression Analysis** – DESeq2 / edgeR  
-
----
+```bash
+conda create -n rnaseq -c bioconda -c conda-forge \
+    fastqc multiqc trimmomatic hisat2 samtools htseq \
+    bioconductor-deseq2 bioconductor-apeglm bioconductor-edger r-ggplot2 r-pheatmap
+```
 
 ## Usage
 
+**Step 1: counts.** List sample IDs in `samples.txt`, with reads at `data/raw/<ID>/<ID>_1.fastq.gz` and `_2.fastq.gz`. Set `STRAND` to match your library prep (`no`, `yes` or `reverse`; most Illumina TruSeq stranded kits are `reverse`):
+
 ```bash
-git clone https://github.com/kashyapshilpi/RNA-Seq-DEGs-analysis.git
+GENOME_FA=ref/genome.fna GTF=ref/genes.gtf STRAND=reverse THREADS=16 \
+    bash 01_rnaseq_counts.sh samples.txt
+```
 
+**Step 2: differential expression.** Fill in a sample sheet with `control` / `treatment` conditions, then:
 
-## Results
+```bash
+Rscript 02_deseq2.R results/counts/count_matrix.tsv samplesheet.csv results/deseq2
+Rscript 03_edger.R  results/counts/count_matrix.tsv samplesheet.csv results/edger
+```
 
-The results of the Differential Expression Analysis will be stored in the output directory. This will include lists of differentially expressed genes, statistical significance values, and visualization plots depicting expression changes.
+Thresholds default to adjusted p < 0.05 and |log2FC| > 1. Change them with environment variables, e.g. `PADJ=0.01 LFC=2 Rscript 02_deseq2.R ...`.
+
+## Outputs
+
+| File | Contents |
+|---|---|
+| `results/counts/count_matrix.tsv` | Raw gene counts, one column per sample |
+| `results/deseq2/DEGs.tsv`, `DEGs_up.tsv`, `DEGs_down.tsv` | Significant genes |
+| `results/deseq2/all_genes.tsv` | Full results table |
+| `results/deseq2/deseq2_plots.pdf` | Dispersion, MA, PCA, sample-distance heatmap, volcano |
+| `results/edger/...` | Same tables plus MDS, BCV and volcano plots |
+| `results/multiqc/` | Combined QC report |
+
+## Data
+
+Raw data are not included. The original analysis used public RNA-seq data from the tea plant (*Camellia sinensis*, NCBI assembly GCF_004153795.1).
 
 ## License
 
-This project is licensed under the [MIT License](license.txt).
-
-## Contributing
-
-If you wish to contribute to this project, feel free to open issues, submit pull requests, or suggest improvements. We welcome your contributions!
-
-Thank you for using this Differential Expression Analysis repository. If you have any questions or encounter any issues, please don't hesitate to contact us.
-
-Happy analyzing!
+MIT. See [licence.txt](licence.txt).
