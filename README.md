@@ -1,71 +1,118 @@
-# RNA-seq Differential Expression Analysis
+# RNA-seq Differential Expression Pipeline
 
-Paired-end RNA-seq workflow from raw reads to differentially expressed genes, with DESeq2 as the primary method and edgeR as a cross-check.
+[![CI](https://github.com/kashyapshilpi/RNA-Seq-DEGs-analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/kashyapshilpi/RNA-Seq-DEGs-analysis/actions/workflows/ci.yml)
+[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A524.04-23aa62.svg)](https://www.nextflow.io/)
+[![run with conda](https://img.shields.io/badge/run%20with-conda-3EB049?logo=anaconda)](https://docs.conda.io/)
+[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?logo=docker)](https://www.docker.com/)
 
-> Developed during my MSc in Bioinformatics. Kept as a reference implementation; not actively maintained.
+A Nextflow (DSL2) pipeline for paired-end RNA-seq: from raw reads to differentially expressed genes, with **DESeq2** as the primary method and **edgeR** as an independent cross-check. Every push is tested end-to-end on public data by GitHub Actions.
 
 ## Workflow
 
-```
-FASTQ ─► FastQC ─► Trimmomatic ─► HISAT2 ─► samtools sort ─► HTSeq-count
-      ─► count_matrix.tsv ─┬─► DESeq2 (apeglm-shrunken fold changes)
-                           └─► edgeR (quasi-likelihood F-test)
+```mermaid
+flowchart LR
+    A[FASTQ pairs] --> B[FastQC]
+    A --> C[Trimmomatic]
+    C --> D[FastQC<br/>trimmed]
+    C --> E[HISAT2<br/>+ samtools]
+    F[Genome FASTA] --> G[HISAT2 index] --> E
+    E --> H[HTSeq-count]
+    I[GTF] --> H
+    H --> J[Count matrix]
+    J --> K[DESeq2<br/>apeglm shrinkage]
+    J --> L[edgeR<br/>QL F-test]
+    B & D & C & E & H --> M[MultiQC]
 ```
 
-## Repository contents
+## Quick start
 
-| File | Purpose |
+Requires [Nextflow](https://www.nextflow.io/docs/latest/install.html) ≥ 24.04 and either conda or Docker.
+
+Try it on the bundled public test data (yeast, from nf-core/test-datasets):
+
+```bash
+nextflow run kashyapshilpi/RNA-Seq-DEGs-analysis -profile test,docker
+# or
+nextflow run kashyapshilpi/RNA-Seq-DEGs-analysis -profile test,conda
+```
+
+Run on your own data:
+
+```bash
+nextflow run kashyapshilpi/RNA-Seq-DEGs-analysis -profile docker \
+    --input samplesheet.csv \
+    --fasta genome.fa \
+    --gtf genes.gtf \
+    --strandedness reverse \
+    --outdir results
+```
+
+## Samplesheet
+
+```csv
+sample,fastq_1,fastq_2,condition
+CTRL_1,/data/ctrl1_R1.fastq.gz,/data/ctrl1_R2.fastq.gz,control
+CTRL_2,/data/ctrl2_R1.fastq.gz,/data/ctrl2_R2.fastq.gz,control
+TREAT_1,/data/trt1_R1.fastq.gz,/data/trt1_R2.fastq.gz,treatment
+TREAT_2,/data/trt2_R1.fastq.gz,/data/trt2_R2.fastq.gz,treatment
+```
+
+Paths can be local files or URLs. See [`assets/samplesheet_test.csv`](assets/samplesheet_test.csv).
+
+## Parameters
+
+| Parameter | Default | Description |
+|---|---|---|
+| `--input` | – | Samplesheet CSV (required) |
+| `--fasta` | – | Reference genome FASTA (required) |
+| `--gtf` | – | Gene annotation GTF (required) |
+| `--outdir` | `results` | Output directory |
+| `--strandedness` | `no` | HTSeq strandedness: `no`, `yes` or `reverse` (most TruSeq stranded kits are `reverse`) |
+| `--gtf_attribute` | `gene_id` | GTF attribute used as the gene ID |
+| `--contrast_reference` | `control` | Reference condition |
+| `--contrast_target` | `treatment` | Condition compared against the reference |
+| `--padj` | `0.05` | Adjusted p-value / FDR cutoff |
+| `--lfc` | `1` | Absolute log2 fold-change cutoff |
+| `--min_len` | `36` | Minimum read length after trimming |
+| `--adapters` | TruSeq3-PE | Adapter FASTA for Trimmomatic |
+
+## Profiles
+
+| Profile | What it does |
 |---|---|
-| `01_rnaseq_counts.sh` | QC, trimming, alignment, gene counting, merged count matrix, MultiQC report |
-| `02_deseq2.R` | DESeq2 differential expression, MA / PCA / distance heatmap / volcano plots |
-| `03_edger.R` | edgeR differential expression, MDS / BCV / volcano plots |
-| `samplesheet.example.csv` | Example sample sheet (`sample_id,condition`) |
-
-## Requirements
-
-- FastQC, MultiQC, Trimmomatic 0.39, HISAT2, samtools, HTSeq ≥ 2.0
-- R ≥ 4.1 with `DESeq2`, `apeglm`, `edgeR`, `ggplot2`, `pheatmap`
-
-Example install with conda:
-
-```bash
-conda create -n rnaseq -c bioconda -c conda-forge \
-    fastqc multiqc trimmomatic hisat2 samtools htseq \
-    bioconductor-deseq2 bioconductor-apeglm bioconductor-edger r-ggplot2 r-pheatmap
-```
-
-## Usage
-
-**Step 1: counts.** List sample IDs in `samples.txt`, with reads at `data/raw/<ID>/<ID>_1.fastq.gz` and `_2.fastq.gz`. Set `STRAND` to match your library prep (`no`, `yes` or `reverse`; most Illumina TruSeq stranded kits are `reverse`):
-
-```bash
-GENOME_FA=ref/genome.fna GTF=ref/genes.gtf STRAND=reverse THREADS=16 \
-    bash 01_rnaseq_counts.sh samples.txt
-```
-
-**Step 2: differential expression.** Fill in a sample sheet with `control` / `treatment` conditions, then:
-
-```bash
-Rscript 02_deseq2.R results/counts/count_matrix.tsv samplesheet.csv results/deseq2
-Rscript 03_edger.R  results/counts/count_matrix.tsv samplesheet.csv results/edger
-```
-
-Thresholds default to adjusted p < 0.05 and |log2FC| > 1. Change them with environment variables, e.g. `PADJ=0.01 LFC=2 Rscript 02_deseq2.R ...`.
+| `conda` / `mamba` | Creates a conda environment per step from bioconda / conda-forge |
+| `docker` | Runs each step in a container built from the same conda packages via [Wave](https://seqera.io/wave/) |
+| `test` | Small public dataset for a quick end-to-end check |
 
 ## Outputs
 
-| File | Contents |
+| Folder | Contents |
 |---|---|
-| `results/counts/count_matrix.tsv` | Raw gene counts, one column per sample |
-| `results/deseq2/DEGs.tsv`, `DEGs_up.tsv`, `DEGs_down.tsv` | Significant genes |
-| `results/deseq2/all_genes.tsv` | Full results table |
-| `results/deseq2/deseq2_plots.pdf` | Dispersion, MA, PCA, sample-distance heatmap, volcano |
-| `results/edger/...` | Same tables plus MDS, BCV and volcano plots |
-| `results/multiqc/` | Combined QC report |
+| `fastqc_raw/`, `fastqc_trimmed/` | Per-sample read QC |
+| `trimmomatic/` | Trimmed read pairs and logs |
+| `hisat2_align/` | Sorted, indexed BAMs and alignment summaries |
+| `htseq_count/` | Per-sample gene counts |
+| `merge_counts/count_matrix.tsv` | Gene × sample count matrix |
+| `deseq2/` | `DEGs.tsv`, `DEGs_up.tsv`, `DEGs_down.tsv`, `all_genes.tsv`, normalised counts, dispersion / MA / PCA / distance heatmap / volcano plots |
+| `edger/` | Same tables plus MDS, BCV, QL dispersion and volcano plots |
+| `multiqc/multiqc_report.html` | Combined QC report |
+| `pipeline_info/` | Nextflow execution report, timeline and trace |
 
-## Data
+## Repository layout
 
-Raw data are not included. The original analysis used public RNA-seq data from the tea plant (*Camellia sinensis*, NCBI assembly GCF_004153795.1).
+```
+main.nf              workflow
+nextflow.config      parameters, resources, profiles
+modules/             one process per tool
+bin/                 R and Python scripts used by the pipeline
+conf/test.config     public test dataset
+assets/              test samplesheet, adapter sequences
+.github/workflows/   CI: stub run + end-to-end conda test
+```
+
+## Background
+
+Started as my MSc training project on differential expression (originally a tea-plant RNA-seq dataset) and rebuilt as a reproducible, tested Nextflow pipeline.
 
 ## License
 
