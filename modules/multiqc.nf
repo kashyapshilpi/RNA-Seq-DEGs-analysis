@@ -11,7 +11,7 @@ process MULTIQC {
 
     script:
     """
-    multiqc --force --title 'RNA-seq DEG pipeline' .
+    multiqc --force .
     """
 
     stub:
