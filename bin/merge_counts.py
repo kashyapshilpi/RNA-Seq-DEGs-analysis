@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Merge per-sample HTSeq count files (<sample>.counts.txt) into one gene x sample matrix.
 
+Why: DESeq2 and edgeR need all samples in one table. The gene lists are checked to match,
+so samples counted with different annotations are caught instead of silently misaligned.
+
 Usage: merge_counts.py SAMPLE1.counts.txt SAMPLE2.counts.txt ... > count_matrix.tsv
 HTSeq summary rows (__no_feature, __ambiguous, ...) are dropped.
 """

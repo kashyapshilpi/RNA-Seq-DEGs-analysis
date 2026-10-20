@@ -1,4 +1,5 @@
 process HISAT2_BUILD {
+    // Why: Build the genome index once; HISAT2 is splice-aware, which RNA reads need.
     tag "${fasta.simpleName}"
     label 'process_high'
     conda 'bioconda::hisat2=2.2.1'

@@ -1,4 +1,5 @@
 process EDGER {
+    // Why: Same test with a different statistical model, as an independent check on DESeq2.
     label 'process_medium'
     conda 'bioconda::bioconductor-edger'
 

@@ -1,4 +1,5 @@
 process HISAT2_ALIGN {
+    // Why: Align reads to the genome across splice junctions, then sort by position.
     tag "${meta.id}"
     label 'process_high'
     conda 'bioconda::hisat2=2.2.1 bioconda::samtools=1.21'

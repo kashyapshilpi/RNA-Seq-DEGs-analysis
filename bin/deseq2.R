@@ -41,13 +41,15 @@ ss$condition <- relevel(factor(ss$condition), ref = ref_level)
 rownames(ss) <- ss$sample
 
 dds <- DESeqDataSetFromMatrix(counts, colData = ss, design = ~ condition)
-keep <- rowSums(counts(dds) >= 10) >= min(table(ss$condition))   # drop low-count genes
+# genes with almost no reads can't be tested reliably and only add to multiple-testing burden
+keep <- rowSums(counts(dds) >= 10) >= min(table(ss$condition))
 dds <- dds[keep, ]
 message(sum(keep), " genes pass the low-count filter")
 dds <- DESeq(dds)
 
 coef <- resultsNames(dds)[2]                                       # condition_<target>_vs_<reference>
 res  <- results(dds, name = coef, alpha = padj_cut)
+# shrink fold changes of noisy low-count genes towards 0, so rankings aren't driven by noise
 res  <- lfcShrink(dds, coef = coef, res = res, type = "apeglm")
 summary(res)
 
@@ -63,6 +65,7 @@ write_tsv(data.frame(gene_id = rownames(dds), counts(dds, normalized = TRUE), ch
           "normalised_counts.tsv")
 
 # ---- Plots -------------------------------------------------------------------
+# variance-stabilised counts are used only for plots (PCA, distances), not for testing.
 # vst() needs >= 1000 genes; small panels and test data fall back to the full transform.
 vsd <- if (nrow(dds) >= 1000) vst(dds, blind = TRUE) else varianceStabilizingTransformation(dds, blind = TRUE)
 

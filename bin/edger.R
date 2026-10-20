@@ -29,12 +29,14 @@ counts <- counts[, ss$sample, drop = FALSE]
 group  <- relevel(factor(ss$condition), ref = ref_level)
 
 y <- DGEList(counts, group = group)
+# drop genes too lowly expressed to test, then correct for library composition (TMM)
 y <- y[filterByExpr(y), , keep.lib.sizes = FALSE]
 y <- calcNormFactors(y)                       # TMM normalisation
 message(nrow(y), " genes pass filterByExpr")
 
 design <- model.matrix(~ group)
 y   <- estimateDisp(y, design)
+# quasi-likelihood test: edgeR's recommended test, conservative with few replicates
 fit <- glmQLFit(y, design)
 qlf <- glmQLFTest(fit, coef = 2)              # target vs reference
 

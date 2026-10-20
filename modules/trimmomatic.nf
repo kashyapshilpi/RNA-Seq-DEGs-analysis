@@ -1,4 +1,5 @@
 process TRIMMOMATIC {
+    // Why: Remove adapters and low-quality bases so they don't distort alignment.
     tag "${meta.id}"
     label 'process_medium'
     conda 'bioconda::trimmomatic=0.39'

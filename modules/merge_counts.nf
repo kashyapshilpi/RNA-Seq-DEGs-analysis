@@ -1,4 +1,5 @@
 process MERGE_COUNTS {
+    // Why: Join per-sample counts into one gene x sample table for DESeq2 and edgeR.
     label 'process_low'
     conda 'conda-forge::python=3.12'
 

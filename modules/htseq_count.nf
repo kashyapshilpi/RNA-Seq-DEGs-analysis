@@ -1,4 +1,5 @@
 process HTSEQ_COUNT {
+    // Why: Count reads per gene: the raw numbers that differential expression is tested on.
     tag "${meta.id}"
     label 'process_medium'
     conda 'bioconda::htseq=2.0'

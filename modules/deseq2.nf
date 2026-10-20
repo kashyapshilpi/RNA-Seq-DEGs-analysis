@@ -1,4 +1,5 @@
 process DESEQ2 {
+    // Why: Find genes whose expression differs between conditions (main method).
     label 'process_medium'
     conda 'bioconda::bioconductor-deseq2 bioconda::bioconductor-apeglm conda-forge::r-ggplot2 conda-forge::r-pheatmap'
 

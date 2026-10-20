@@ -54,19 +54,19 @@ workflow {
     gtf      = file(params.gtf, checkIfExists: true)
     adapters = file(params.adapters, checkIfExists: true)
 
-    // QC and trimming
+    // QC and trimming: bad reads cause false alignments and counts
     FASTQC_RAW(ch_reads)
     TRIMMOMATIC(ch_reads, adapters)
     FASTQC_TRIMMED(TRIMMOMATIC.out.reads)
 
-    // Alignment and counting
+    // Alignment and counting: reads -> genome position -> reads per gene
     HISAT2_BUILD(fasta)
     HISAT2_ALIGN(TRIMMOMATIC.out.reads, HISAT2_BUILD.out.index)
     HTSEQ_COUNT(HISAT2_ALIGN.out.bam, gtf)
 
     MERGE_COUNTS(HTSEQ_COUNT.out.counts.map { meta, counts -> counts }.collect())
 
-    // Differential expression
+    // Differential expression with two methods: genes found by both are the most reliable
     DESEQ2(MERGE_COUNTS.out.matrix, samplesheet)
     EDGER(MERGE_COUNTS.out.matrix, samplesheet)
 
